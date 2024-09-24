@@ -94,10 +94,10 @@ def ProcessBreweries():
 
                 logging.info("Writing at: " + trusted_path)
 
-                # Convert to Parquet and partition by brewery location - postal code
+                # Convert to Parquet and partition by brewery location - state
                 df.write \
-                    .partitionBy("postal_code") \
-                    .parquet(refined_path, mode="overwrite")
+                    .partitionBy("state") \
+                    .parquet(trusted_path, mode="overwrite")
 
                 # Move processed files to folder
                 # TODO: implement purge policy
@@ -109,8 +109,28 @@ def ProcessBreweries():
                 # Move files to folder
                 move_failed_file(file_path, f)
 
-    
-    init_env() >> fetch_data_to_local() >> transform_data_to_parquet()
+    @task
+    def aggregate_data(**kwargs):
+        # Init Spark session
+        spark = SparkSession.builder.appName("datalake-brewery").getOrCreate()
+
+        trusted_path = getcwd() + f"/data_lake/trusted/breweries/"
+        files = [f for f in listdir(trusted_path) if isfile(join(trusted_path, f))]
+        logging.info(files)
+
+        # Read data and make aggregations
+        df_trusted = spark.read.parquet(f"{getcwd()}/data_lake/trusted/breweries/")
+        df = df_trusted.groupBy("state", "brewery_type").count()
+
+        logging.info(f"Count: {df.count()}")
+        
+        logging.info("Aggregated view:")
+        df.show()
+
+        # Save result
+        df.write.parquet(f"{getcwd()}/data_lake/refined/breweries/", mode='overwrite')
+     
+    init_env() >> fetch_data_to_local() >> transform_data_to_parquet() >> aggregate_data()
                 
 dag = ProcessBreweries()
 
