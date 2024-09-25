@@ -1,5 +1,7 @@
 # breweries-datalake
+This project focuses on building a data pipeline that ingests raw data from an API, transforms it into structured formats, and creates aggregated insights. The pipeline is designed with a three-layer architecture to ensure data integrity, efficient processing, and scalable analytics
 
+The diagram below illustrates the datalake architecture, higlighting the bronze, silver, and gold layer.
 ![](docs/diagram.jpg)
 
 ## Init project
