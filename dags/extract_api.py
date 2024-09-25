@@ -22,6 +22,7 @@ FAILED_PATH = "/data_lake/failed/breweries/"
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
     catchup=False,
     dagrun_timeout=datetime.timedelta(minutes=60),
+    default_args={"retries": 2}
 )
 def ProcessBreweries():
     def move_failed_file(file_path, f):
@@ -123,7 +124,7 @@ def ProcessBreweries():
         df = df_trusted.groupBy("state", "brewery_type").count()
 
         logging.info(f"Count: {df.count()}")
-        
+
         logging.info("Aggregated view:")
         df.show()
 
